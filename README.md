@@ -1,4 +1,4 @@
-# CADOCBIN: Cleaning and Denoising of Degraded Document Images Using Vision Transformers
+# Enhancing Document Image Binarization through Domain Adaptation with Transformer Cross-Attention
 
 ## Overview
 
