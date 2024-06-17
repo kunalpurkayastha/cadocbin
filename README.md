@@ -36,12 +36,13 @@ python test.py --data_path /YOUR_DATA_PATH/ --model_weights_path  /THE_MODEL_WEI
 ### Model Weights
 
 The pre-trained weights for all the best CADOBIN model variants trained on DIBCO benchmarks are available at:
-```
+
+
 https://drive.google.com/drive/folders/1gaGC69AtLTvWSQo-VZciAMsV8C-EGDSj?usp=drive_link
-```
+
 
 ### Dataset
 
 The dataset used to train and test the model are available at: 
-```
+
 https://drive.google.com/file/d/1qsjVS1b8lkPKp9I39Mn2zX_u4fQlvnxz/view?usp=drive_link
