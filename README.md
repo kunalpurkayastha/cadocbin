@@ -2,14 +2,15 @@
 
 ## Overview
 
-This paper tackles the tough problem of cleaning up degraded document images for better recognition and use. We introduce a groundbreaking solution: an encoder-decoder architecture powered by vision transformers. This model promises to elevate the quality of both machine-printed and handwritten documents through end-to-end training. It cleverly learns both universal and domain-specific features to enhance the denoising process. Our encoder uses cross-attention to handle pixel patches and positional data directly, skipping convolutions, while the decoder adeptly rebuilds clear images from the processed patches. Extensive testing shows our model surpasses the best existing methods on various DIBCO benchmarks, heralding a new era in document image processing.
+This model tackles the tough problem of cleaning up degraded document images for better recognition and use. We introduce a groundbreaking solution: an encoder-decoder architecture powered by cross-attention vision transformers. This model promises to elevate the quality of both machine-printed and handwritten documents through end-to-end training. It cleverly learns both universal and domain-specific features to enhance the denoising process. Our encoder uses cross-attention to handle pixel patches and positional data directly, skipping convolutions, while the decoder adeptly rebuilds clear images from the processed patches. Extensive testing shows our model surpasses the best existing methods on various DIBCO benchmarks, heralding a new era in document image processing.
 
 ## Environment Install
 
 Clone this repository and navigate to the root directory of the project.
 ```
+conda create -n docbin python=3.8
+conda activate docbin
 git clone https://github.com/kunalpurkayastha/cadocbin.git
-
 cd cadocbin
 ```
 ### Requirement
