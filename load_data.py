@@ -10,96 +10,81 @@ from PIL import Image
 from config import Configs
 
 class Read_data(D.Dataset):
-    """
-    The data loader class for 1 set (for example train)
-
-    Args:
-        base_dir (str): the data path
-        file_label (list of str): the names of the data instances
-        set (str): the set (train, valid or test)
-        split_size (int): the image (patch) size
-        augmentation (bool): whwther to apply augmentation
-        flipped (bool): whether the data is flipped
-    """
-    def __init__(self, base_dir, file_label,set, split_size, augmentation=True , flipped = False):
+    def __init__(self, base_dir, file_label, set, split_size, augmentation=True, flipped=False):
         self.base_dir = base_dir
         self.file_label = file_label
         self.set = set
         self.split_size = split_size
         self.augmentation = augmentation
-        self.flipped  = flipped
-        
+        self.flipped = flipped
+
     def __getitem__(self, index):
-        img_name = self.file_label[index]
-        idx, deg_img, gt_img = self.readImages(img_name)
-        return idx, deg_img, gt_img
-        
+        try:
+            img_name = self.file_label[index]
+            idx, deg_img, gt_img = self.readImages(img_name)
+            # Print debug information to verify
+            print(f"Successfully loaded image {img_name} at index {index}")
+            return idx, deg_img, gt_img
+        except Exception as e:
+            print(f"Error in __getitem__ at index {index}: {e}")
+            raise NotImplementedError(f"Could not process index {index}. Error: {e}")
+
     def __len__(self):
         return len(self.file_label)
 
     def readImages(self, file_name):
         """
         Read a pair of images (degraded + clean gt)
-        
+
         Args:
             file_name (str): the index (name) of the image pair
         Returns:
             file_name (str): the index (name) of the image pair
             out_deg_img (np.array): the degraded image
             out_gt_img (np.array): the clean image
-
         """
-        url_deg = self.base_dir +'/'+ self.set+'/' + file_name
-        url_gt = self.base_dir +'/'+ self.set+'_gt/'+file_name
-        
+        url_deg = self.base_dir + '/' + self.set + '/' + file_name
+        url_gt = self.base_dir + '/' + self.set + '_gt/' + file_name
+
+        # Debugging information to verify file paths
+        print(f"Reading degraded image: {url_deg}")
+        print(f"Reading ground truth image: {url_gt}")
+
+        # Read images using OpenCV
         deg_img = cv2.imread(url_deg)
         gt_img = cv2.imread(url_gt)
+
+        if deg_img is None or gt_img is None:
+            raise ValueError(f"Cannot find image: {url_deg} or {url_gt}")
 
         if self.flipped:
             deg_img = cv2.rotate(deg_img, cv2.ROTATE_180)
             gt_img = cv2.rotate(gt_img, cv2.ROTATE_180)
-        try:
-            deg_img.any()
-        except:
-            print('###!Cannot find image: ' + url_deg)
-        try:
-            gt_img.any()
-        except:
-            print('###!Cannot find image: ' + url_gt)
-        
+
         deg_img = Image.fromarray(np.uint8(deg_img))
         gt_img = Image.fromarray(np.uint8(gt_img))
 
-        # apply data augmentation
-        if self.augmentation:
-            # random crop
-            i, j, h, w = transforms.RandomCrop.get_params(deg_img, output_size=(self.split_size, self.split_size))
-            deg_img = TF.crop(deg_img, i, j, h, w)
-            gt_img = TF.crop(gt_img, i, j, h, w)
+        # Resize images to ensure consistency
+        deg_img = TF.resize(deg_img, [256, 256])
+        gt_img = TF.resize(gt_img, [256, 256])
 
-            # random horizontal flipping
-            if random.random() > 0.5:
-                deg_img = TF.hflip(deg_img)
-                gt_img = TF.hflip(gt_img)
-
-            # random vertical flipping
-            if random.random() > 0.5:
-                deg_img = TF.vflip(deg_img)
-                gt_img = TF.vflip(gt_img)
-
-        deg_img = (np.array(deg_img) /255).astype('float32')
-        gt_img = (np.array(gt_img)  / 255).astype('float32')
-        
-        # normalize data
+        # Normalize data
         mean = [0.485, 0.456, 0.406]
         std = [0.229, 0.224, 0.225]
-        out_deg_img = np.zeros([3, *deg_img.shape[:-1]])
-        out_gt_img = np.zeros([3, *gt_img.shape[:-1]])
+
+        # Convert to numpy arrays and normalize
+        deg_img = np.array(deg_img).astype('float32') / 255.0
+        gt_img = np.array(gt_img).astype('float32') / 255.0
+
         for i in range(3):
-            out_deg_img[i] = (deg_img[:,:,i] - mean[i]) / std[i]
-            out_gt_img[i] = (gt_img[:,:,i] - mean[i]) / std[i]
-        
-        return file_name, out_deg_img, out_gt_img
+            deg_img[:, :, i] = (deg_img[:, :, i] - mean[i]) / std[i]
+            gt_img[:, :, i] = (gt_img[:, :, i] - mean[i]) / std[i]
+
+        # Debugging output for shapes
+        print(f"Processed image shapes: deg_img={deg_img.shape}, gt_img={gt_img.shape}")
+
+        return file_name, deg_img, gt_img
+
 
 
 def load_datasets(flipped=False):
@@ -117,7 +102,7 @@ def load_datasets(flipped=False):
     cfg = Configs().parse() 
     base_dir = cfg.data_path
     split_size  = cfg.split_size
-    data_tr = os.listdir(cfg.data_path+'train')
+    data_tr = os.listdir(cfg.data_path + 'train')
     np.random.shuffle(data_tr)
     data_va = os.listdir(cfg.data_path+'valid')
     np.random.shuffle(data_va)
@@ -145,8 +130,18 @@ def sort_batch(batch):
     data_index = []
     data_in = []
     data_out = []
+
+    # Determine the shape of the first element to enforce consistency
+    target_shape = batch[0][1].shape
+
     for i in range(n_batch):
         idx, img, gt_img = batch[i]
+
+        # Check if shapes are consistent, if not, resize to target shape
+        if img.shape != target_shape:
+            img = np.resize(img, target_shape)
+        if gt_img.shape != target_shape:
+            gt_img = np.resize(gt_img, target_shape)
 
         data_index.append(idx)
         data_in.append(img)

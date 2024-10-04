@@ -19,6 +19,35 @@ pip install -r requirement.txt
 ```
 ## Using CADOCBIN
 
+### Data Arrangement
+```
+data
+|_ train
+|    |_ 1.jpg
+|    |_ 2.jpg
+|    ...
+|_ train_gt
+|    |_ 1.jpg
+|    |_ 2.jpg
+|    ...
+|_ valid
+|    |_ 1.jpg
+|    |_ 2.jpg
+|    ...
+|_ valid_gt
+|    |_ 1.jpg
+|    |_ 2.jpg
+|    ...
+|_ test
+|    |_ 1.jpg
+|    |_ 2.jpg
+|    ...
+|_ test_gt
+     |_ 1.jpg
+     |_ 2.jpg
+     ...
+```
+
 ### Training
 For training, specify the desired settings (batch_size, patch_size, model_size, split_size and training epochs) when running the file train.py. For example, for a base model with a patch_size of (16 X 16) and a batch_size of 32 we use the following command:
 
@@ -30,8 +59,23 @@ You will get visualization results from the validation dataset on each epoch in 
 ### Testing on a DIBCO dataset
 To test the trained model on a specific DIBCO dataset (should be matched with the one specified in Section Process Data, if not, run process_dibco.py again). Download the model weights (In section Model Zoo), or use your own trained model weights. Then, run the following command. Here, I test on H-DIBCO 2018, using the Base model with 8X8 patch_size, and a batch_size of 16. The binarized images will be in the folder ./vis+"YOUR_CONFIGS_HERE"/epoch_testing/
 
+It is recommended to test the model using GPU rather than CPU. To run using GPU install the corresponding torch version compiled with CUDA using the below command
+
 ```
-python test.py --data_path /YOUR_DATA_PATH/ --model_weights_path  /THE_MODEL_WEIGHTS_PATH/  --batch_size 16 --vit_model_size base --vit_patch_size 8 --split_size 256 --testing_dataset 2018
+pip install torch==1.10.0+cu102 torchvision==0.11.0+cu102 torchaudio==0.10.0 -f https://download.pytorch.org/whl/torch_stable.html
+
+```
+Test the model on your dataset using the below command
+
+```
+python test.py --data_path /YOUR_DATA_PATH/ --model_weights_path  /THE_MODEL_WEIGHTS_PATH/ 
+```
+
+### Run Inference on custom images
+
+Run the below command
+```
+python viz.py 
 ```
 
 ### Model Weights
